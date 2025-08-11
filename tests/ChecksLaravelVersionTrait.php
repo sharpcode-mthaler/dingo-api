@@ -2,6 +2,7 @@
 
 namespace Dingo\Api\Tests;
 
+use Dingo\Api\Tests\Stubs\Application10Stub;
 use Dingo\Api\Tests\Stubs\Application9Stub;
 use Dingo\Api\Tests\Stubs\ApplicationStub;
 use Dingo\Api\Tests\Stubs\Application8Stub;
@@ -12,7 +13,7 @@ use Dingo\Api\Tests\Stubs\Application58Stub;
 trait ChecksLaravelVersionTrait
 {
     public $installed_file_path = __DIR__.'/../vendor/composer/installed.json';
-    public $current_release = '8.0';
+    public $current_release = '12.0';
 
     private function getFrameworkVersion()
     {
@@ -27,7 +28,7 @@ trait ChecksLaravelVersionTrait
         // Find laravel/framework or lumen package
         $just_laravel = array_filter($parsed_data, function ($composerPackageData) {
             if (is_array($composerPackageData) && array_key_exists('name', $composerPackageData)) {
-                if ('laravel/framework' === $composerPackageData['name'] || 'laravel/lumen-framework' === $composerPackageData['name']) {
+                if ('laravel/framework' === $composerPackageData['name']) {
                     return true;
                 }
             }
@@ -55,7 +56,9 @@ trait ChecksLaravelVersionTrait
         $version = str_replace('v', '', $version);
 
         // Return the version stub for the right version
-        if (version_compare($version, '9.0.0', '>=')) {
+        if (version_compare($version, '10.0.0', '>=')) {
+            return new Application10Stub;
+        } else if (version_compare($version, '9.0.0', '>=')) {
             return new Application9Stub;
         } elseif (version_compare($version, '8.0.0', '>=')) {
             return new Application8Stub;

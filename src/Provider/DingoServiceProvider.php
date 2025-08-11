@@ -2,6 +2,8 @@
 
 namespace Dingo\Api\Provider;
 
+use Illuminate\Routing\CallableDispatcher;
+use Illuminate\Routing\Contracts\CallableDispatcher as CallableDispatcherContract;
 use RuntimeException;
 use Dingo\Api\Auth\Auth;
 use Dingo\Api\Dispatcher;
@@ -55,6 +57,7 @@ class DingoServiceProvider extends ServiceProvider
         $this->registerExceptionHandler();
 
         $this->registerDispatcher();
+        $this->registerCallableDispatcher();
 
         $this->registerAuth();
 
@@ -145,6 +148,13 @@ class DingoServiceProvider extends ServiceProvider
         });
     }
 
+    public function registerCallableDispatcher()
+    {
+        $this->app->singleton(CallableDispatcherContract::class, function ($app) {
+            return new CallableDispatcher($app);
+        });
+    }
+
     /**
      * Register the auth.
      *
@@ -176,16 +186,18 @@ class DingoServiceProvider extends ServiceProvider
      */
     protected function registerDocsCommand()
     {
-        $this->app->singleton(\Dingo\Api\Console\Command\Docs::class, function ($app) {
-            return new Command\Docs(
-                $app[\Dingo\Api\Routing\Router::class],
-                $app[\Dingo\Blueprint\Blueprint::class],
-                $app[\Dingo\Blueprint\Writer::class],
-                $this->config('name'),
-                $this->config('version')
-            );
-        });
+        if (class_exists(\Dingo\Blueprint\Blueprint::class)) {
+            $this->app->singleton(\Dingo\Api\Console\Command\Docs::class, function ($app) {
+                return new Command\Docs(
+                    $app[\Dingo\Api\Routing\Router::class],
+                    $app[\Dingo\Blueprint\Blueprint::class],
+                    $app[\Dingo\Blueprint\Writer::class],
+                    $this->config('name'),
+                    $this->config('version')
+                );
+            });
 
-        $this->commands([\Dingo\Api\Console\Command\Docs::class]);
+            $this->commands([\Dingo\Api\Console\Command\Docs::class]);
+        }
     }
 }

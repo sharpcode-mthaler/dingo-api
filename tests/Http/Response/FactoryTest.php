@@ -7,10 +7,11 @@ use Dingo\Api\Http\Response\Factory;
 use Dingo\Api\Tests\BaseTestCase;
 use Dingo\Api\Tests\Stubs\UserStub;
 use Dingo\Api\Transformer\Factory as TransformerFactory;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
-use League\Fractal\Manager;
-use League\Fractal\Resource\Item;
+use PHPOpenSourceSaver\Fractal\Manager;
+use PHPOpenSourceSaver\Fractal\Resource\Item;
 use Mockery;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -27,6 +28,7 @@ class FactoryTest extends BaseTestCase
 
     public function setUp(): void
     {
+        parent::setUp();
         $this->transformer = Mockery::mock(TransformerFactory::class);
         $this->factory = new Factory($this->transformer);
     }
@@ -93,11 +95,11 @@ class FactoryTest extends BaseTestCase
         }));
 
         $this->assertInstanceOf(Collection::class, $this->factory->collection(new Collection([new UserStub('Jason')]), 'test', function ($resource, $fractal) {
-            $this->assertInstanceOf(\League\Fractal\Resource\Collection::class, $resource);
+            $this->assertInstanceOf(\PHPOpenSourceSaver\Fractal\Resource\Collection::class, $resource);
             $this->assertInstanceOf(Manager::class, $fractal);
         })->getOriginalContent());
         $this->assertInstanceOf(Collection::class, $this->factory->withCollection(new Collection([new UserStub('Jason')]), 'test', function ($resource, $fractal) {
-            $this->assertInstanceOf(\League\Fractal\Resource\Collection::class, $resource);
+            $this->assertInstanceOf(\PHPOpenSourceSaver\Fractal\Resource\Collection::class, $resource);
             $this->assertInstanceOf(Manager::class, $fractal);
         })->getOriginalContent());
     }
@@ -127,6 +129,16 @@ class FactoryTest extends BaseTestCase
     }
 
     public function testMakingPaginatorRegistersUnderlyingClassWithTransformer()
+    {
+        $this->setupTranslator();
+
+        $this->transformer->shouldReceive('register')->twice()->with(UserStub::class, 'test', [], null);
+
+        $this->assertInstanceOf(LengthAwarePaginator::class, $this->factory->paginator(new LengthAwarePaginator([new UserStub('Jason')], 1, 1), 'test')->getOriginalContent());
+        $this->assertInstanceOf(LengthAwarePaginator::class, $this->factory->withPaginator(new LengthAwarePaginator([new UserStub('Jason')], 1, 1), 'test')->getOriginalContent());
+    }
+
+    public function testMakingSimplePaginatorRegistersUnderlyingClassWithTransformer()
     {
         $this->transformer->shouldReceive('register')->twice()->with(UserStub::class, 'test', [], null);
 
